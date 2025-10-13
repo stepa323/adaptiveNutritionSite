@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Выбор завтраков</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+</head>
+<body>
+<main class="container">
+    <article>
+        <hgroup>
+            <h1>🍽️ Выбор завтраков</h1>
+            <h2>На оставшуюся неделю</h2>
+        </hgroup>
+
+        {% if not week_dates %}
+        <article>
+            <h3>✅ На этой неделе выбор завершен</h3>
+            <p>Следующий выбор будет доступен в понедельник.</p>
+        </article>
+        {% else %}
+        <!-- DEBUG: {{ daily_menus }} -->
+        <form method="POST">
+            {% csrf_token %}
+
+            <fieldset>
+                <legend>👤 Данные ученика</legend>
+
+                <label>
+                    Имя
+                    <input type="text" name="first_name" placeholder="Введите имя" required>
+                </label>
+
+                <label>
+                    Фамилия
+                    <input type="text" name="last_name" placeholder="Введите фамилию" required>
+                </label>
+
+                <label>
+                    Класс
+                    <select name="class_name" required>
+                        <option value="">-- Выберите класс --</option>
+                        {% for class in classes %}
+                        <option value="{{ class.id }}">{{ class.name }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+            </fieldset>
+
+            <fieldset>
+                <legend>📅 Выбор завтраков</legend>
+
+                {% for day in week_data %}
+                <article>
+                    <h4>
+                        {% if day.date.weekday == 0 %}Понедельник
+                        {% elif day.date.weekday == 1 %}Вторник
+                        {% elif day.date.weekday == 2 %}Среда
+                        {% elif day.date.weekday == 3 %}Четверг
+                        {% elif day.date.weekday == 4 %}Пятница{% endif %}
+                        ({{ day.date|date:"d.m" }})
+                    </h4>
+
+                    {% if day.has_menu %}
+                    <label>
+                        <input type="radio" name="breakfast_{{ day.date|date:'Y-m-d' }}"
+                               value="{{ day.menu.option_1.id }}" required>
+                        {{ day.menu.option_1.name }}
+                    </label>
+                    <label>
+                        <input type="radio" name="breakfast_{{ day.date|date:'Y-m-d' }}"
+                               value="{{ day.menu.option_2.id }}">
+                        {{ day.menu.option_2.name }}
+                    </label>
+                    <label>
+                        <input type="radio" name="breakfast_{{ day.date|date:'Y-m-d' }}"
+                               value="none" checked>
+                        ❌ Ничего
+                    </label>
+                    {% else %}
+                    <p><small>🚫 Меню не задано</small></p>
+                    {% endif %}
+                </article>
+                {% endfor %}
+            </fieldset>
+
+            <button type="submit" class="contrast">💾 Сохранить выбор</button>
+        </form>
+        {% endif %}
+    </article>
+</main>
+</body>
+</html>
