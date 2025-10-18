@@ -1,0 +1,152 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+<style>
+    .stats-summary {
+        cursor: pointer;
+        padding: 10px;
+        background: var(--darkened-bg);
+        color: var(--body-fg);
+        border: 1px solid var(--border-color);
+    }
+    .stats-table {
+        width: 100%;
+        margin-top: 10px;
+        background: var(--body-bg);
+        color: var(--body-fg);
+    }
+    .stats-table th,
+    .stats-table td {
+        padding: 8px;
+        border: 1px solid var(--border-color);
+        color: var(--body-fg);
+    }
+    .stats-table th {
+        background: var(--darkened-bg);
+    }
+    .no-data {
+        padding: 10px;
+        color: var(--body-quiet-color);
+        font-style: italic;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1 style="color: var(--body-fg);">📊 Отчет по завтракам за неделю</h1>
+    <h2 style="color: var(--body-fg);">{{ week_start|date:"d.m" }} - {{ week_end|date:"d.m.Y" }}</h2>
+
+    <!-- Форма выбора классов -->
+    <div class="module">
+        <form method="get">
+            <fieldset class="module aligned">
+                <h2 style="color: var(--body-fg);">Выберите классы для отчета:</h2>
+                <div class="form-row">
+                    {% for class in all_classes %}
+                    <div class="checkbox-row">
+                        <label style="color: var(--body-fg);">
+                            <input type="checkbox" name="classes" value="{{ class.id }}"
+                                   {% if class.id in selected_classes or not selected_classes %}checked{% endif %}>
+                            {{ class.name }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </fieldset>
+            <div class="submit-row">
+                <input type="submit" value="Показать отчет" class="default">
+            </div>
+        </form>
+    </div>
+
+    <!-- Таблицы с отчетами -->
+    {% for class_data in report_data %}
+    <div class="module">
+        <h2 style="color: var(--body-fg);">Класс: {{ class_data.class.name }}</h2>
+        <table style="width: 100%; color: var(--body-fg);">
+            <thead>
+            <tr>
+                <th>Фамилия</th>
+                <th>Имя</th>
+                {% for date in week_dates %}
+                <th style="text-align: center;">
+                    {{ date|date:"d.m" }}<br>
+                    <small>
+                        {% if date.weekday == 0 %}пн
+                        {% endif %}{% if date.weekday == 1 %}вт
+                        {% endif %}{% if date.weekday == 2 %}ср
+                        {% endif %}{% if date.weekday == 3 %}чт
+                        {% endif %}{% if date.weekday == 4 %}пт
+                        {% endif %}
+                    </small>
+                </th>
+                {% endfor %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for pupil_data in class_data.pupils %}
+            <tr class="{% cycle 'row1' 'row2' %}">
+                <td style="color: var(--body-fg);"><strong>{{ pupil_data.pupil.last_name }}</strong></td>
+                <td style="color: var(--body-fg);">{{ pupil_data.pupil.first_name }}</td>
+                {% for choice in pupil_data.daily_choices %}
+                <td style="text-align: center; color: var(--body-fg);">
+                    {% if choice == "—" %}
+                    <span style="color: var(--body-quiet-color);">—</span>
+                    {% else %}
+                    {{ choice }}
+                    {% endif %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endfor %}
+
+    <!-- Статистика -->
+    <div class="module">
+        <h2 style="color: var(--body-fg);">📈 Статистика по блюдам</h2>
+
+        {% if dish_statistics %}
+        {% for day_stats in dish_statistics %}
+        <details>
+            <summary class="stats-summary">
+                {{ day_stats.date|date:"d.m" }} (
+                {% if day_stats.date.weekday == 0 %}пн
+                {% endif %}{% if day_stats.date.weekday == 1 %}вт
+                {% endif %}{% if day_stats.date.weekday == 2 %}ср
+                {% endif %}{% if day_stats.date.weekday == 3 %}чт
+                {% endif %}{% if day_stats.date.weekday == 4 %}пт
+                {% endif %})
+            </summary>
+            {% if day_stats.stats and day_stats.stats|length > 0 %}
+            <table class="stats-table">
+                <thead>
+                <tr>
+                    <th>Блюдо</th>
+                    <th>Количество порций</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for dish in day_stats.stats %}
+                <tr>
+                    <td>{{ dish.chosen_dish__name }}</td>
+                    <td>{{ dish.total }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="no-data">Нет данных за этот день</p>
+            {% endif %}
+        </details>
+        {% endfor %}
+        {% else %}
+        <p class="no-data">Нет данных для статистики</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

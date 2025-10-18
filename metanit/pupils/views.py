@@ -1,3 +1,4 @@
+from django.db.models import Count
 from django.shortcuts import render, redirect
 from datetime import datetime, timedelta
 from django.http import HttpRequest, JsonResponse
@@ -5,6 +6,7 @@ from django.shortcuts import render
 from django.contrib import messages
 
 from .models import Class, Pupil, Dish, DailyMenu, BreakfastChoice
+from django.contrib.auth.decorators import login_required
 
 
 def pooling(request: HttpRequest):
@@ -13,7 +15,6 @@ def pooling(request: HttpRequest):
             first_name = request.POST.get('first_name')
             last_name = request.POST.get('last_name')
             class_id = request.POST.get('class_name')
-
 
             pupil, created = Pupil.objects.get_or_create(
                 first_name=first_name,
@@ -85,3 +86,4 @@ def pooling(request: HttpRequest):
         }
 
         return render(request, 'pool.html', context)
+
