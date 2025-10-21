@@ -1,0 +1,75 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+
+<!-- Кнопка экспорта -->
+<div style="margin-bottom: 20px;">
+    <a href="{% url 'admin:pupils_weeklybreakfasts_export_excel' %}" class="button"
+       style="background-color: #217346; color: white;">
+        📊 Экспорт в Excel
+    </a>
+    <a href="{% url 'admin:pupils_weeklybreakfasts_changelist' %}" class="button">
+        ← Вернуться к списку учеников
+    </a>
+</div>
+
+{% for class_stat in classes_stats %}
+
+<div class="module">
+    <h2>Класс: {{ class_stat.class.name }}</h2>
+    <p><strong>Всего учеников: {{ class_stat.total_pupils }}</strong></p>
+
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+        <tr style="background-color: #f5f5f5;">
+            <th style="padding: 8px; border: 1px solid #ddd;">День недели</th>
+            <th style="padding: 8px; border: 1px solid #ddd;">Вариант 1</th>
+            <th style="padding: 8px; border: 1px solid #ddd;">Вариант 2</th>
+            <th style="padding: 8px; border: 1px solid #ddd;">Не выбрали</th>
+            <th style="padding: 8px; border: 1px solid #ddd;">Выбрали</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for day_name, day_data in class_stat.day_stats.items %}
+        <tr>
+            <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">
+                {% if day_name == 'monday' %}Понедельник
+                {% elif day_name == 'tuesday' %}Вторник
+                {% elif day_name == 'wednesday' %}Среда
+                {% elif day_name == 'thursday' %}Четверг
+                {% elif day_name == 'friday' %}Пятница{% endif %}
+            </td>
+
+            {% comment %} Вариант 1 и 2 из статистики блюд {% endcomment %}
+            <td style="padding: 8px; border: 1px solid #ddd;">
+                {% for dish, count in day_data.dishes.items %}
+                {% if forloop.first %}{{ dish }}: <strong>{{ count }}</strong>{% endif %}
+                {% empty %}
+                -
+                {% endfor %}
+            </td>
+
+            <td style="padding: 8px; border: 1px solid #ddd;">
+                {% for dish, count in day_data.dishes.items %}
+                {% if forloop.counter == 2 %}{{ dish }}: <strong>{{ count }}</strong>{% endif %}
+                {% endfor %}
+            </td>
+
+            <td style="padding: 8px; border: 1px solid #ddd; color: {% if day_data.not_chosen > 0 %}red{% else %}green{% endif %};">
+                <strong>{{ day_data.not_chosen }}</strong>
+            </td>
+
+            <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">
+                {{ day_data.chosen }}
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endfor %}
+
+<div style="margin-top: 20px;">
+    <a href="{% url 'admin:pupils_weeklybreakfasts_changelist' %}" class="button">← Вернуться к списку учеников</a>
+</div>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "admin/change_list.html" %}
+
+{% block object-tools %}
+  <div class="object-tools">
+    {% if show_statistics_link %}
+    <a href="{% url 'admin:pupils_weeklybreakfasts_statistics' %}" class="button" style="background-color: #417690; color: white;">
+      📊 Статистика
+    </a>
+    <a href="{% url 'admin:pupils_weeklybreakfasts_export_excel' %}" class="button" style="background-color: #217346; color: white;">
+      📈 Экспорт в Excel
+    </a>
+    {% endif %}
+    {{ block.super }}
+  </div>
+{% endblock %}
