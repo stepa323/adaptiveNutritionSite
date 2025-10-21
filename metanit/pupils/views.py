@@ -5,7 +5,7 @@ from django.http import HttpRequest, JsonResponse
 from django.shortcuts import render
 from django.contrib import messages
 
-from .models import Class, Pupil, Dish, DailyMenu, BreakfastChoice
+from .models import Class, Pupil, Dish, DailyMenu, WeeklyBreakfasts
 from django.contrib.auth.decorators import login_required
 
 
@@ -22,26 +22,48 @@ def pooling(request: HttpRequest):
                 class_group_id=class_id
             )
 
-            saved_choices = 0
+            week_start_date = datetime.now() - timedelta(days=datetime.now().weekday())
+
+            weekly_breakfast, created = WeeklyBreakfasts.objects.get_or_create(
+                pupil=pupil,
+                week_start_date=week_start_date
+            )
+
             for key, value in request.POST.items():
                 if key.startswith('breakfast_'):
                     date_str = key.replace('breakfast_', '')
                     date = datetime.strptime(date_str, '%Y-%m-%d').date()
 
-                    BreakfastChoice.objects.filter(
-                        pupil=pupil,
-                        date=date
-                    ).delete()
+                    weekday = date.weekday()
 
                     if value and value != "none" and value != "":
-                        BreakfastChoice.objects.create(
-                            pupil=pupil,
-                            date=date,
-                            chosen_dish_id=value
-                        )
-                        saved_choices += 1
+                        dish = Dish.objects.get(id=value)
+                        if weekday == 0:  # Понедельник
+                            weekly_breakfast.monday = dish
+                        elif weekday == 1:  # Вторник
+                            weekly_breakfast.tuesday = dish
+                        elif weekday == 2:  # Среда
+                            weekly_breakfast.wednesday = dish
+                        elif weekday == 3:  # Четверг
+                            weekly_breakfast.thursday = dish
+                        elif weekday == 4:  # Пятница
+                            weekly_breakfast.friday = dish
+                    else:
+                        # Сбрасываем выбор если "ничего"
+                        if weekday == 0:
+                            weekly_breakfast.monday = None
+                        elif weekday == 1:
+                            weekly_breakfast.tuesday = None
+                        elif weekday == 2:
+                            weekly_breakfast.wednesday = None
+                        elif weekday == 3:
+                            weekly_breakfast.thursday = None
+                        elif weekday == 4:
+                            weekly_breakfast.friday = None
 
-            messages.success(request, f'Сохранено {saved_choices} выборов для {first_name}!')
+            weekly_breakfast.save()
+
+            messages.success(request, f'Сохранены выборы для {first_name}!')
             return redirect('/pool/')
 
         except Exception as e:
@@ -61,7 +83,6 @@ def pooling(request: HttpRequest):
         else:
             week_dates = [today + timedelta(days=i - current_weekday) for i in range(current_weekday + 1, 5)]
 
-        # Создаем список вместо словаря
         week_data = []
         for date in week_dates:
             try:
@@ -86,4 +107,3 @@ def pooling(request: HttpRequest):
         }
 
         return render(request, 'pool.html', context)
-
